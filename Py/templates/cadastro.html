@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+	body { background: #fff; color: #111; }
+	.topbar { border-bottom: 1px solid #eee; background: #fff; }
+	.topbar a { color: #666; text-decoration: none; }
+	.topbar a:hover { color: #111; }
+	.avatar { width: 34px; height: 34px; border-radius: 50%; background: #ddd; display: inline-block; }
+	.box { background: #fff; border: 1px solid #ececec; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.03); }
+	.profile-card { border: 1px solid #ececec; border-radius: 12px; padding: 16px; cursor: pointer; }
+	.profile-card.active { border-color: #111; box-shadow: 0 0 0 2px #11111112; }
+	.progress { height: 8px; }
+	.line { height: 1px; background: #efefef; }
+	.step { display: none; }
+	.step.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-3 py-md-4">
+	<header class="topbar d-flex align-items-center justify-content-between py-3 px-3 px-md-4 sticky-top w-100">
+		<div class="d-flex align-items-center gap-3">
+			<span class="avatar"></span>
+			<strong class="fs-4">FOTOTECTA</strong>
+		</div>
+		<nav class="d-none d-lg-flex align-items-center gap-4 small ms-auto ps-4">
+			<a href="{{ url_for('homepage') }}">Home</a>
+			<a href="{{ url_for('login') }}">Login</a>
+			<a href="{{ url_for('clientelogado') }}">Cliente</a>
+			<a href="{{ url_for('fotografologado') }}">Fotógrafo</a>
+			<a href="{{ url_for('admin') }}">Admin</a>
+			<a href="{{ url_for('sobrenos') }}">Sobre nós</a>
+		</nav>
+	</header>
+
+	<div class="container py-5">
+		<div class="row justify-content-center">
+			<div class="col-12 col-lg-9">
+				<section class="box p-4 p-md-5">
+					<h1 class="h3 fw-bold mb-2">Cadastro</h1>
+					<p class="text-muted mb-3">Preencha em etapas para facilitar.</p>
+
+					<div class="mb-4">
+						<div class="d-flex justify-content-between small mb-2"><span id="stepLabel">Etapa 1 de 3</span><span id="stepName">Perfil</span></div>
+						<div class="progress"><div id="progressBar" class="progress-bar bg-dark" style="width: 33%"></div></div>
+					</div>
+
+					<form id="formCadastro" method="post" action="#" novalidate>
+						<input type="hidden" id="tipoPerfil" name="tipoPerfil" value="">
+
+						<div id="step1" class="step active">
+							<h2 class="h5 mb-3">1. Como você deseja usar a plataforma?</h2>
+							<div class="row g-3">
+								<div class="col-md-6">
+									<div class="profile-card" data-profile="cliente">
+										<div class="fw-semibold">Quero contratar um fotógrafo</div>
+										<p class="text-muted small mb-0">Fluxo rápido para clientes.</p>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="profile-card" data-profile="fotografo">
+										<div class="fw-semibold">Sou fotógrafo e quero trabalhar</div>
+										<p class="text-muted small mb-0">Cadastro profissional com portfólio.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div id="step2" class="step">
+							<h2 class="h5 mb-3">2. Dados comuns</h2>
+							<div class="row g-3">
+								<div class="col-md-6"><label class="form-label">Nome completo</label><input class="form-control" name="nome" required></div>
+								<div class="col-md-6"><label class="form-label">E-mail</label><input type="email" class="form-control" name="email" required></div>
+								<div class="col-md-6">
+									<label class="form-label">Senha</label>
+									<input id="senhaCadastro" type="password" class="form-control" name="senha" required>
+									<div class="progress mt-2"><div id="forcaSenha" class="progress-bar" style="width: 0%"></div></div>
+									<div id="txtForca" class="small text-muted mt-1">Força da senha: fraca</div>
+								</div>
+								<div class="col-md-6"><label class="form-label">Telefone/WhatsApp</label><input class="form-control" name="telefone" required></div>
+								<div class="col-md-6"><label class="form-label">Cidade/Estado ou CEP</label><input class="form-control" name="localizacao" required></div>
+								<div class="col-md-6"><label class="form-label">Foto de perfil</label><input type="file" class="form-control" name="foto" accept="image/*"></div>
+							</div>
+
+							<div class="form-check mt-3">
+								<input class="form-check-input" type="checkbox" id="termos" required>
+								<label class="form-check-label" for="termos">Aceito termos de uso e política de privacidade.</label>
+							</div>
+						</div>
+
+						<div id="step3" class="step">
+							<h2 class="h5 mb-3">3. Dados do seu perfil</h2>
+
+							<div id="fieldsFotografo" class="d-none">
+								<div class="row g-3">
+									<div class="col-md-6">
+										<label class="form-label">Especialidades</label>
+										<div class="border rounded p-2">
+											<div class="form-check"><input class="form-check-input" type="checkbox" name="esp" value="Casamentos"><label class="form-check-label">Casamentos</label></div>
+											<div class="form-check"><input class="form-check-input" type="checkbox" name="esp" value="Eventos"><label class="form-check-label">Eventos</label></div>
+											<div class="form-check"><input class="form-check-input" type="checkbox" name="esp" value="Ensaios"><label class="form-check-label">Ensaios</label></div>
+											<div class="form-check"><input class="form-check-input" type="checkbox" name="esp" value="Publicidade"><label class="form-check-label">Publicidade</label></div>
+										</div>
+									</div>
+									<div class="col-md-6"><label class="form-label">Link de portfólio</label><input type="url" id="portfolio" class="form-control" placeholder="https://"></div>
+									<div class="col-12"><label class="form-label">Bio / descrição</label><textarea id="bio" class="form-control" rows="3"></textarea></div>
+									<div class="col-md-6"><label class="form-label">Equipamento (opcional)</label><input class="form-control"></div>
+									<div class="col-md-6"><label class="form-label">Preço médio</label><input id="preco" class="form-control" placeholder="Ex: R$ 800 - R$ 1.500"></div>
+								</div>
+							</div>
+
+							<div id="fieldsCliente" class="d-none">
+								<div class="row g-3">
+									<div class="col-12"><label class="form-label">Interesses</label><textarea id="interesses" class="form-control" rows="3" placeholder="Ex: Procuro fotógrafos para festas infantis"></textarea></div>
+									<div class="col-md-6"><label class="form-label">Empresa (opcional)</label><input class="form-control"></div>
+								</div>
+							</div>
+						</div>
+
+						<div class="d-flex justify-content-between mt-4">
+							<button id="btnVoltar" type="button" class="btn btn-outline-dark" disabled>Voltar</button>
+							<button id="btnAvancar" type="button" class="btn btn-dark">Avançar</button>
+							<button id="btnEnviar" type="submit" class="btn btn-dark d-none">Finalizar cadastro</button>
+						</div>
+					</form>
+				</section>
+			</div>
+		</div>
+
+		<footer class="line pt-4 pb-2 text-center text-muted small mt-4">© 2026 • FOTOTECTA | Sobre | Política de privacidade | Termos de uso | Suporte | Contato</footer>
+	</div>
+</div>
+
+<script>
+	const byId = (id) => document.getElementById(id);
+	const qsa = (sel) => [...document.querySelectorAll(sel)];
+
+	const steps = ['step1', 'step2', 'step3'].map(byId);
+	const stepNames = ['Perfil', 'Dados comuns', 'Dados específicos'];
+	const stepLabel = byId('stepLabel');
+	const stepName = byId('stepName');
+	const progressBar = byId('progressBar');
+	const btnVoltar = byId('btnVoltar');
+	const btnAvancar = byId('btnAvancar');
+	const btnEnviar = byId('btnEnviar');
+	const tipoPerfil = byId('tipoPerfil');
+	const fieldsFotografo = byId('fieldsFotografo');
+	const fieldsCliente = byId('fieldsCliente');
+	const formCadastro = byId('formCadastro');
+	let step = 0;
+
+	function renderStep() {
+		steps.forEach((el, i) => el.classList.toggle('active', i === step));
+		stepLabel.textContent = `Etapa ${step + 1} de ${steps.length}`;
+		stepName.textContent = stepNames[step];
+		progressBar.style.width = `${((step + 1) / steps.length) * 100}%`;
+		btnVoltar.disabled = step === 0;
+		btnAvancar.classList.toggle('d-none', step === steps.length - 1);
+		btnEnviar.classList.toggle('d-none', step !== steps.length - 1);
+	}
+
+	function stepValido() {
+		if (step === 0) return Boolean(tipoPerfil.value);
+		if (step !== 1) return true;
+		return qsa('#step2 [required]').every((el) => el.checkValidity());
+	}
+
+	function aplicarPerfil(profile) {
+		tipoPerfil.value = profile;
+		fieldsFotografo.classList.toggle('d-none', profile !== 'fotografo');
+		fieldsCliente.classList.toggle('d-none', profile !== 'cliente');
+
+		['portfolio', 'bio', 'preco'].forEach((id) => { byId(id).required = profile === 'fotografo'; });
+		byId('interesses').required = profile === 'cliente';
+	}
+
+	qsa('.profile-card').forEach((card) => {
+		card.addEventListener('click', () => {
+			qsa('.profile-card').forEach((c) => c.classList.remove('active'));
+			card.classList.add('active');
+			aplicarPerfil(card.dataset.profile);
+		});
+	});
+
+	btnAvancar.addEventListener('click', () => {
+		if (!stepValido()) {
+			alert('Preencha os campos obrigatórios desta etapa.');
+			return;
+		}
+		step = Math.min(step + 1, steps.length - 1);
+		renderStep();
+	});
+
+	btnVoltar.addEventListener('click', () => {
+		step = Math.max(step - 1, 0);
+		renderStep();
+	});
+
+	const senhaCadastro = byId('senhaCadastro');
+	const forcaSenha = byId('forcaSenha');
+	const txtForca = byId('txtForca');
+	const niveisForca = [
+		{ ate: 25, cor: 'bg-danger', texto: 'fraca' },
+		{ ate: 50, cor: 'bg-warning', texto: 'média' },
+		{ ate: 75, cor: 'bg-info', texto: 'boa' },
+		{ ate: 100, cor: 'bg-success', texto: 'forte' }
+	];
+
+	senhaCadastro.addEventListener('input', () => {
+		const valor = senhaCadastro.value;
+		const regras = [valor.length >= 8, /[A-Z]/.test(valor), /[0-9]/.test(valor), /[^A-Za-z0-9]/.test(valor)];
+		const score = regras.filter(Boolean).length * 25;
+		const nivel = niveisForca.find((n) => score <= n.ate);
+
+		forcaSenha.style.width = `${score}%`;
+		forcaSenha.className = `progress-bar ${nivel.cor}`;
+		txtForca.textContent = `Força da senha: ${nivel.texto}`;
+	});
+
+	formCadastro.addEventListener('submit', (e) => {
+		e.preventDefault();
+		alert('Cadastro concluído com sucesso. Bem-vindo(a)!');
+	});
+
+	renderStep();
+</script>
+{% endblock %}
