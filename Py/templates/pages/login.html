@@ -1,0 +1,312 @@
+{% extends "layouts/base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/login.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-5">
+                <section class="box login-card p-4 p-md-5">
+                    <h1 class="h3 fw-bold mb-2 text-center">Entrar</h1>
+                    <p class="text-muted text-center mb-4">Acesse sua conta para contratar ou trabalhar.</p>
+
+                    <div id="loginSection">
+                        <div id="loginSuccessAlert" class="alert alert-success d-none" role="status" aria-live="polite">
+                            Login realizado com sucesso. Redirecionando...
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="email">E-mail</label>
+                            <input id="email" name="email" type="email" class="form-control" placeholder="voce@email.com" autocomplete="email" required>
+                            <div id="emailErro" class="field-error" aria-live="polite"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="senha">Senha</label>
+                            <div class="input-group">
+                                <input id="senha" name="senha" type="password" class="form-control" placeholder="Digite sua senha" autocomplete="current-password" required>
+                                <button id="toggleSenha" class="btn btn-outline-secondary" type="button" aria-label="Mostrar senha">👁️ Mostrar</button>
+                            </div>
+                            <div class="progress mt-2"><div id="forcaSenhaLogin" class="progress-bar progress-w-0"></div></div>
+                            <div id="txtForcaLogin" class="small text-muted mt-1">Força da senha: muito fraca</div>
+                            <div class="form-text">A senha fica oculta por padrão.</div>
+                            <div id="senhaErro" class="field-error" aria-live="polite"></div>
+                            <div id="avisoTentativas" class="form-text text-danger d-none fw-semibold"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="lembrar">
+                                <label class="form-check-label" for="lembrar">Lembrar de mim</label>
+                            </div>
+                            <a href="#" id="esqueciSenha" class="small fw-semibold text-decoration-underline">Esqueci minha senha</a>
+                        </div>
+
+                        <button id="btnEntrar" class="btn btn-dark w-100" type="button">
+                            <span id="btnEntrarText">Entrar</span>
+                            <span id="btnEntrarSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                        </button>
+
+                        <p class="small text-muted text-center mt-3 mb-0">Seus dados são protegidos e usados somente para autenticação.</p>
+
+                        <p class="text-center mt-3 mb-0 small">Não tem conta? <a href="{{ url_for('cadastro') }}">Cadastre-se</a></p>
+                    </div>
+
+                    <div id="forgotPasswordFlow" class="d-none mt-4 border rounded p-3 bg-light">
+                        <div class="fw-semibold mb-2">Recuperar acesso</div>
+                        <p class="small text-muted mb-3">Informe seu e-mail e data de nascimento para solicitar redefinição de senha.</p>
+                        <div class="mb-2">
+                            <label for="emailRecuperacao" class="form-label small">E-mail</label>
+                            <input id="emailRecuperacao" type="email" class="form-control" placeholder="voce@email.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nascimentoRecuperacao" class="form-label small">Data de nascimento</label>
+                            <input id="nascimentoRecuperacao" type="date" class="form-control">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="btnEnviarRecuperacao" type="button" class="btn btn-dark btn-sm">Enviar solicitação</button>
+                            <button id="btnVoltarLogin" type="button" class="btn btn-outline-dark btn-sm">Voltar ao login</button>
+                        </div>
+                    </div>
+
+                    <!-- 
+                    <div class="mt-4 p-3 border rounded bg-light">
+                        <div class="fw-semibold mb-2">Logins de teste</div>
+                        <ul id="listaCredenciais" class="small mb-0">
+                            <li>Admin: admin@fotecta.com / admin123</li>
+                            <li>Cliente: cliente@fotecta.com / cliente123</li>
+                            <li>Fotografo: fotografo@fotecta.com / foto123</li>
+                        </ul>
+                    </div>
+                    -->
+
+                <!-- Toast de Notificação (Erro/Sucesso) -->
+                <div class="toast-container position-fixed top-0 end-0 p-3 toast-z">
+                    <div id="loginToast" class="toast align-items-center border-0 text-white shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+                        <div class="d-flex">
+                            <div class="toast-body fw-medium px-3 py-2" id="toastMessage"></div>
+                            <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+                        </div>
+                    </div>
+                </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.Auth) return;
+        
+        const email = document.getElementById('email');
+        const senha = document.getElementById('senha');
+        const toggleSenha = document.getElementById('toggleSenha');
+        const btnEntrar = document.getElementById('btnEntrar');
+        const btnEntrarText = document.getElementById('btnEntrarText');
+        const btnEntrarSpinner = document.getElementById('btnEntrarSpinner');
+        const forcaSenhaLogin = document.getElementById('forcaSenhaLogin');
+        const txtForcaLogin = document.getElementById('txtForcaLogin');
+        const loginSection = document.getElementById('loginSection');
+        const loginToastEl = document.getElementById('loginToast');
+        const toastMessage = document.getElementById('toastMessage');
+        const loginSuccessAlert = document.getElementById('loginSuccessAlert');
+        const emailErro = document.getElementById('emailErro');
+        const senhaErro = document.getElementById('senhaErro');
+        const listaCredenciais = document.getElementById('listaCredenciais');
+        const esqueciSenha = document.getElementById('esqueciSenha');
+        const avisoTentativas = document.getElementById('avisoTentativas');
+        const forgotPasswordFlow = document.getElementById('forgotPasswordFlow');
+        const emailRecuperacao = document.getElementById('emailRecuperacao');
+        const btnEnviarRecuperacao = document.getElementById('btnEnviarRecuperacao');
+        const btnVoltarLogin = document.getElementById('btnVoltarLogin');
+        const nascimentoRecuperacao = document.getElementById('nascimentoRecuperacao');
+
+        let tentativasSenha = 3;
+
+        const atualizarForcaSenha = (valor) => {
+            const leitura = window.Auth && window.Auth.passwordStrength
+                ? window.Auth.passwordStrength(valor)
+                : { score: 0, level: 'muito fraca', color: 'bg-danger' };
+
+            forcaSenhaLogin.style.width = `${leitura.score}%`;
+            forcaSenhaLogin.className = `progress-bar ${leitura.color}`;
+            txtForcaLogin.textContent = `Força da senha: ${leitura.level}`;
+        };
+
+        const setLoading = (loading) => {
+            btnEntrar.disabled = loading;
+            btnEntrarText.textContent = loading ? 'Entrando...' : 'Entrar';
+            btnEntrarSpinner.classList.toggle('d-none', !loading);
+        };
+
+        const setFieldError = (field, errorEl, message) => {
+            errorEl.textContent = message || '';
+            field.setAttribute('aria-invalid', message ? 'true' : 'false');
+            field.classList.toggle('is-invalid', Boolean(message));
+        };
+
+        const validateEmail = () => {
+            const valor = email.value.trim();
+            if (!valor) {
+                setFieldError(email, emailErro, 'Digite seu e-mail.');
+                return false;
+            }
+            const valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+            if (!valido) {
+                setFieldError(email, emailErro, 'Formato de e-mail inválido.');
+                return false;
+            }
+            setFieldError(email, emailErro, '');
+            return true;
+        };
+
+        const validateSenha = () => {
+            const valor = senha.value;
+            if (!valor) {
+                setFieldError(senha, senhaErro, 'Digite sua senha.');
+                return false;
+            }
+            setFieldError(senha, senhaErro, '');
+            return true;
+        };
+
+        toggleSenha.addEventListener('click', () => {
+            const escondida = senha.type === 'password';
+            senha.type = escondida ? 'text' : 'password';
+            toggleSenha.textContent = escondida ? '🙈 Ocultar' : '👁️ Mostrar';
+            toggleSenha.setAttribute('aria-label', escondida ? 'Ocultar senha' : 'Mostrar senha');
+        });
+
+        email.addEventListener('input', validateEmail);
+        senha.addEventListener('input', () => {
+            validateSenha();
+            atualizarForcaSenha(senha.value);
+        });
+
+        const userAtual = window.Auth.currentUser();
+        if (userAtual) {
+            window.location.href = window.Auth.redirectForRole(userAtual.tipo);
+            return;
+        }
+
+        if (listaCredenciais) {
+            window.Auth.seedCredentialsText().forEach((item) => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                listaCredenciais.appendChild(li);
+            });
+        }
+
+        const showToast = (msg, theme) => {
+            toastMessage.textContent = msg;
+            // Aplica a cor de fundo baseada no tema passado (danger ou success)
+            loginToastEl.className = `toast align-items-center border-0 text-bg-${theme} shadow-lg rounded-4`;
+            const bsToast = new bootstrap.Toast(loginToastEl);
+            bsToast.show();
+        };
+
+        const doLogin = () => {
+            const emailValor = email.value.trim();
+            const senhaValor = senha.value;
+            const userByEmail = window.Auth.getUsers().find((u) => u.email.toLowerCase() === emailValor.toLowerCase());
+            const isAdminLogin = userByEmail && userByEmail.tipo === 'admin';
+
+            const emailOk = validateEmail();
+            const senhaOk = validateSenha();
+            if (!emailOk || !senhaOk) {
+                showToast('Revise os campos destacados e tente novamente.', 'warning');
+                return;
+            }
+
+            setLoading(true);
+            const result = window.Auth.login(emailValor, senhaValor);
+
+            if (!result.ok) {
+                setLoading(false);
+                if (result.reason === 'wrong_password') {
+                    if (!isAdminLogin) tentativasSenha--;
+                    setFieldError(senha, senhaErro, 'Senha incorreta.');
+                    if (isAdminLogin || tentativasSenha > 0) {
+                        avisoTentativas.textContent = `Atenção: você ainda tem ${tentativasSenha} tentativa(s) de senha.`;
+                        if (isAdminLogin) {
+                            avisoTentativas.textContent = 'Conta de administrador: o acesso não será bloqueado automaticamente.';
+                        }
+                        avisoTentativas.classList.remove('d-none');
+                        showToast(result.message, 'danger');
+                    } else {
+                        // Deduz as tentativas permitidas. Caso esgotem, oculta a interface de login
+                        // e obriga o usuário a iniciar o processo de recuperação de conta.
+                        avisoTentativas.classList.add('d-none');
+                        loginSection.classList.add('d-none');
+                        forgotPasswordFlow.classList.remove('d-none');
+                        emailRecuperacao.value = emailValor;
+                        showToast('Limite de tentativas atingido. Solicite a redefinição de senha.', 'warning');
+                    }
+                } else {
+                    // Erro de email inexistente
+                    setFieldError(email, emailErro, 'E-mail não encontrado.');
+                    showToast(result.message, 'danger');
+                }
+                return;
+            }
+
+            // Exibe o visual de Sucesso
+            avisoTentativas.classList.add('d-none');
+            loginSuccessAlert.classList.remove('d-none');
+            setFieldError(email, emailErro, '');
+            setFieldError(senha, senhaErro, '');
+
+            // Aguarda 2 segundos simulando tempo de processamento antes de redirecionar para a página correta.
+            setTimeout(() => {
+                window.location.href = result.redirect;
+            }, 2000);
+        };
+
+        btnEntrar.addEventListener('click', doLogin);
+        
+        esqueciSenha.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginSection.classList.add('d-none');
+            forgotPasswordFlow.classList.remove('d-none');
+            emailRecuperacao.value = email.value.trim();
+        });
+
+        btnVoltarLogin.addEventListener('click', () => {
+            forgotPasswordFlow.classList.add('d-none');
+            loginSection.classList.remove('d-none');
+            tentativasSenha = 3; // Reseta as tentativas ao voltar
+            avisoTentativas.classList.add('d-none');
+        });
+
+        btnEnviarRecuperacao.addEventListener('click', () => {
+            if (!emailRecuperacao.value || !nascimentoRecuperacao.value) {
+                showToast('Preencha sua data de nascimento.', 'warning');
+                return;
+            }
+            const res = window.Auth.requestPasswordReset(emailRecuperacao.value, nascimentoRecuperacao.value);
+            if (res.ok) {
+                showToast(res.message, 'success');
+                btnVoltarLogin.click(); // Volta pro login
+            } else {
+                showToast(res.message, 'danger');
+            }
+        });
+        
+        // Permite logar apertando ENTER
+        document.getElementById('loginSection').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doLogin();
+            }
+        });
+
+        setLoading(false);
+        atualizarForcaSenha('');
+    });
+</script>
+{% endblock %}

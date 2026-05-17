@@ -1,0 +1,196 @@
+{% extends "layouts/base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/clientelogado.css') }}">
+{% endblock %}
+
+{% block content %}
+	<div class="container py-4">
+		<div class="box p-4 p-md-5">
+			<h1 class="h3 fw-bold mb-2">Área do Cliente</h1>
+			<p id="clienteInfo" class="text-muted mb-4">Você está logado como cliente.</p>
+			<div class="d-flex flex-wrap gap-2">
+				<a class="btn btn-dark" href="{{ url_for('busca') }}">Ir para busca avançada</a>
+				<button id="logoutCliente" class="btn btn-outline-dark" type="button">Sair</button>
+			</div>
+		</div>
+
+		<!-- Seção de Favoritos -->
+		<section class="box p-4 p-md-5 mt-4">
+			<h2 class="h5 fw-bold mb-4">Meus Fotógrafos Favoritos ❤️</h2>
+			<div id="listaFavoritos" class="row g-4"></div>
+		</section>
+
+		<!-- Seção Explorar Fotógrafos -->
+		<section class="box p-4 p-md-5 mt-4">
+			<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+				<h2 class="h5 fw-bold mb-0">Explorar Fotógrafos</h2>
+				<input type="text" id="buscaFotografos" class="form-control form-control-sm search-max-250" placeholder="Buscar profissionais...">
+			</div>
+			<div id="listaExplorar" class="row g-4"></div>
+		</section>
+	</div>
+
+	<!-- Modal de Avaliação -->
+	<div class="modal fade" id="modalAvaliar" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Deixar Avaliação</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+				</div>
+				<div class="modal-body">
+					<label class="form-label small fw-semibold">Sua Nota</label>
+					<select id="notaAvaliacao" class="form-select mb-3">
+						<option value="5">⭐⭐⭐⭐⭐ (5/5) - Excelente!</option>
+						<option value="4">⭐⭐⭐⭐ (4/5) - Muito Bom</option>
+						<option value="3">⭐⭐⭐ (3/5) - Bom</option>
+						<option value="2">⭐⭐ (2/5) - Regular</option>
+						<option value="1">⭐ (1/5) - Ruim</option>
+					</select>
+					<label class="form-label small fw-semibold">Seu Comentário</label>
+					<textarea id="textoAvaliacao" class="form-control" rows="3" placeholder="Escreva como foi sua experiência..."></textarea>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+					<button type="button" class="btn btn-dark" id="btnSalvarAvaliacao">Enviar Feedback</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+	const cliente = window.Auth && window.Auth.requireRole('cliente');
+	if (cliente) {
+		document.getElementById('clienteInfo').textContent = `Logado como ${cliente.nome} (${cliente.email}).`;
+
+		const modalAvaliarEl = document.getElementById('modalAvaliar');
+		const modalAvaliar = new bootstrap.Modal(modalAvaliarEl);
+		const btnSalvarAvaliacao = document.getElementById('btnSalvarAvaliacao');
+		const textoAvaliacao = document.getElementById('textoAvaliacao');
+		const notaAvaliacao = document.getElementById('notaAvaliacao');
+		let fotografoParaAvaliar = null;
+		
+		// Renderiza a lista de Favoritos
+		const listaFavoritos = document.getElementById('listaFavoritos');
+		const favoritosIds = cliente.favoritos || [];
+		const fotografosFavoritos = window.Auth.getUsers().filter(u => u.tipo === 'fotografo' && favoritosIds.includes(u.id));
+
+		// Um renderer unico evita duplicar HTML entre Favoritos e Explorar.
+		function renderFotografoCard(f, mode) {
+			if (mode === 'favoritos') {
+				const espHtml = (f.especialidades || []).map(e => `<span class="badge bg-light text-dark border fw-normal">${e}</span>`).join(' ');
+				return `
+					<div class="box p-4 h-100 d-flex flex-column border shadow-sm">
+						<div class="d-flex align-items-center gap-3 mb-3">
+							<div class="shadow-sm avatar-card-md" data-avatar="${f.foto || ''}"></div>
+							<div>
+								<h3 class="h6 fw-bold mb-0">${f.nome}</h3>
+								<a href="mailto:${f.email}" class="small text-decoration-none text-muted">${f.email}</a>
+							</div>
+						</div>
+						<div class="mb-4 d-flex flex-wrap gap-1">${espHtml}</div>
+						<div class="mt-auto">
+							<a href="/perfil-publico?id=${f.id}" class="btn btn-dark btn-sm w-100">Ver Perfil Completo</a>
+							<button class="btn btn-outline-dark btn-sm w-100 mt-2 btn-avaliar" data-id="${f.id}">Deixar Avaliação</button>
+						</div>
+					</div>
+				`;
+			}
+
+			const loc = f.localizacao || 'Localização não informada';
+			const port = f.portfolio || [];
+			let fotosHtml = '';
+			for (let i = 0; i < 3; i++) {
+				const src = port[i] || '';
+				fotosHtml += `<div class="col-4"><div class="rounded shadow-sm portfolio-mini" data-foto="${src}"></div></div>`;
+			}
+			return `
+				<div class="box p-3 h-100">
+					<div class="d-flex align-items-center gap-3 mb-2">
+						<div class="shadow-sm rounded-circle avatar-card-sm" data-avatar="${f.foto || ''}"></div>
+						<div>
+							<h3 class="h6 fw-bold mb-0">${f.nome}</h3>
+							<div class="small text-muted"><i class="fa-solid fa-location-dot me-1"></i>${loc}</div>
+						</div>
+					</div>
+					<div class="row g-1 mt-2">${fotosHtml}</div>
+				</div>
+			`;
+		}
+
+		if (fotografosFavoritos.length === 0) {
+			listaFavoritos.innerHTML = '<div class="col-12"><p class="text-muted mb-0">Você ainda não tem favoritos. Acesse a busca e clique no coração para salvar fotógrafos.</p></div>';
+		} else {
+			fotografosFavoritos.forEach(f => {
+				const col = document.createElement('div');
+				col.className = 'col-12 col-md-6 col-lg-4';
+				col.innerHTML = renderFotografoCard(f, 'favoritos');
+				listaFavoritos.appendChild(col);
+			});
+		}
+
+		// Lógica do botão de Avaliar
+		listaFavoritos.addEventListener('click', (e) => {
+			if (e.target.classList.contains('btn-avaliar')) {
+				fotografoParaAvaliar = e.target.getAttribute('data-id');
+				textoAvaliacao.value = '';
+				modalAvaliar.show();
+			}
+		});
+
+		btnSalvarAvaliacao.addEventListener('click', () => {
+			if (!fotografoParaAvaliar) return;
+			if (!textoAvaliacao.value.trim()) {
+				alert('Digite um comentário antes de enviar sua avaliação.');
+				return;
+			}
+			
+			const fTarget = window.Auth.getUsers().find(u => u.id === fotografoParaAvaliar);
+			if (fTarget) {
+				const avaliacoes = fTarget.avaliacoes || [];
+				avaliacoes.push({ cliente: cliente.nome, texto: textoAvaliacao.value.trim(), nota: parseInt(notaAvaliacao.value, 10), data: new Date().toLocaleDateString() });
+				window.Auth.updateUser(fTarget.id, { avaliacoes });
+				alert('Avaliação enviada com sucesso! Obrigado pelo seu feedback.');
+			}
+			modalAvaliar.hide();
+		});
+
+		// Explorar Fotógrafos
+		const listaExplorar = document.getElementById('listaExplorar');
+		const buscaFotografos = document.getElementById('buscaFotografos');
+		const todosFotografos = window.Auth.getUsers().filter(u => u.tipo === 'fotografo');
+
+		function renderExplorar(lista) {
+			listaExplorar.innerHTML = '';
+			lista.forEach(f => {
+				const col = document.createElement('div');
+				col.className = 'col-12 col-md-6 col-lg-4';
+				col.innerHTML = renderFotografoCard(f, 'explorar');
+				col.querySelectorAll('[data-avatar]').forEach((el) => {
+					const src = el.getAttribute('data-avatar');
+					if (src) el.style.backgroundImage = `url('${src}')`;
+				});
+				col.querySelectorAll('[data-foto]').forEach((el) => {
+					const src = el.getAttribute('data-foto');
+					if (src) el.style.backgroundImage = `url('${src}')`;
+				});
+				listaExplorar.appendChild(col);
+			});
+		}
+
+		renderExplorar(todosFotografos);
+		buscaFotografos.addEventListener('input', (e) => {
+			const termo = e.target.value.toLowerCase().trim();
+			renderExplorar(todosFotografos.filter(f => f.nome.toLowerCase().includes(termo) || (f.localizacao && f.localizacao.toLowerCase().includes(termo))));
+		});
+
+		document.getElementById('logoutCliente').addEventListener('click', () => {
+			window.Auth.logout();
+			window.location.href = '/login';
+		});
+	}
+</script>
+{% endblock %}

@@ -1,10 +1,10 @@
-#Este arquivo importa o Flask e cria as bases do site, banco de dados...
-
 from flask import Flask
 
+# App Flask principal.
 app = Flask(__name__)
 
-from routes import *
+# Importa as rotas após criar o app (evita import circular).
+import routes  # noqa: F401
 
 if __name__ == "__main__":
     app.run()

@@ -1,0 +1,39 @@
+.search-group {
+    max-width: 600px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.portfolio-thumb {
+    padding-top: 100%;
+    background-color: #f0f0f0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.nota-small {
+    font-size: 0.8rem;
+}
+
+.bio-preview {
+    line-height: 1.4;
+}
+
+.btn-favoritar-floating {
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+}
+
+.avatar-card {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #ddd;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
