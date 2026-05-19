@@ -1,0 +1,11 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Página não encontrada - 404{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <h1 class="display-6">404 — Página não encontrada</h1>
+    <p class="lead">A rota que você tentou acessar não existe. Verifique o endereço ou volte para a página inicial.</p>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Voltar para Home</a>
+</div>
+{% endblock %}

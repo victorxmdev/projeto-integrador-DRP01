@@ -1,99 +1,126 @@
-<h1 id="readme-top"> Projeto Integrador em Computação I</h2>
+# FOTECTA
 
-_Read this in other languages:_  
-[_English_](./translations/README-EN.md)  
+Guia rápido para rodar o site localmente e entender a estrutura do projeto.
 
-![license mit](https://img.shields.io/badge/license-MIT-blue.svg)  ![status](https://img.shields.io/badge/status-desenvolvimento-green)  
+## O que é
 
-<details>
-  <summary><b>Conteúdo</b></summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">Sobre o Projeto Integrador</a>
-      <ul>
-        <li><a href="#methodology">Metodologia</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Iniciando o Projeto</a>
-      <ul>
-        <li><a href="#prerequisites">Pré-requisitos</a></li>
-        <li><a href="#installation">Instalação</a></li>
-      </ul>
-    </li>
-    <li><a href="#contributing">Contribuições</a>
-    <ul>
-        <li><a href="#how-do-it">Como Fazer</a></li>
-      </ul>
-    </li>
-    <li><a href="#license">Licença</a></li>
-    <a></li>
-  </ol>
-</details> 
+O FOTECTA é um site em Flask para conectar clientes e fotógrafos. O fluxo principal é simples:
 
-<h2 id="about-the-project"><p align="center">Sobre o Projeto Integrador</p></h2>
+1. O cliente entra, pesquisa fotógrafos e marca favoritos.
+2. O fotógrafo entra, vê o painel e acompanha o que foi salvo.
+3. O admin gerencia usuários e solicitações de recuperação de senha.
 
-Trata-se de uma atividade curricular obrigatória, consiste na resolução de um problema real contextualizado na profissão em que o curso de Bacharelado em Tecnologia da Informação está inserido.​ Em grupo, tivemos que delimitar um problema a partir do tema norteador da disciplina de DRP01-Projeto Integrador em Computação I, propondo uma solução aplicável e usando os conhecimentos estudados nas disciplinas cursadas até o momento.
+## Tecnologias
 
-<b>Tema norteador:</b> desenvolvimento de um software com framework web que utilize noções de banco de dados, praticando controle de versão.
+- Python
+- Flask
+- Bootstrap
+- JavaScript puro
+- Armazenamento local em arquivo JSON temporário
 
-<b>Tema escolhido pelo grupo com base no tema norteador da Univesp:</b> desenvolvimento de um software com framework web para a divulgação de portfólio e captação de clientes para profissionais do ramo fotográfico, utilizando de banco de dados para o armazenamento de informações e controle de versão para o registro da evolução do grupo.
+## Pré-requisitos
 
-<b>Título:</b> FOTECTA - Como conectar fotógrafos com novos clientes
+- Python 3.10 ou superior
+- `pip`
+- VS Code ou outro editor de sua preferência
 
-<b>Orientador:</b> Carlos Alan Vieira Do Nascimento 
+Não é preciso instalar MySQL, banco SQL ou servidor externo. Os dados ficam em um arquivo local temporário.
 
-<b>Integrantes:</b> Gabriela Sampaio da Silva, Gustavo Santos Lima de Oliveira, Ivani Santos André, Jacqueline Santana Nascimento Benevides, Leonardo Quaresma da Silva, Maria José de Sousa, Rodolfo Felix de Azevedo e Victor Gabriel Santos Magalhães 
+## Como rodar
 
-<p align="right">(<a href="#readme-top">voltar ao início</a>)</p>
+### 1. Baixe o projeto
 
-<h3 id="features">Metodologia</h3>
+```bash
+git clone https://github.com/gabrielasams/projeto-integrador-DRP01.git
+cd projeto-integrador-DRP01
+```
 
-- Linguagem de programação: [Python](https://www.python.org/)
-- Framework Web: [Flask](https://flask.palletsprojects.com/en/stable/)
-- Banco de dados: [MySQL](https://www.mysql.com/)
-- Controle de versões: [GitHub](https://docs.github.com/pt)
+### 2. Crie e ative o ambiente virtual
 
-<p align="right">(<a href="#readme-top">voltar ao início</a>)</p>
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-<h2 id="getting-started"><p align="center">Iniciando a Aplicação</p></h2>
-<h3 id="prerequisites">Pré-requisitos</h3>
+No Windows PowerShell:
 
-- IDE [Visual Studio Code 1.98.2](https://ode.visualstudio.com/download)
-- Flask [Criação de ambiente e instalação](https://flask.palletsprojects.com/en/stable/installation/)
-- Bootstrap-flask [Instalação](https://bootstrap-flask.readthedocs.io/en/stable/basic/#installation)
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
 
-<h3 id="installation">Instalação</h3>
+### 3. Instale as dependências
 
-1. No Terminal, clone o repositório: 
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-   ```bash
-        git clone https://github.com/gabrielasams/projeto-integrador-DRP01.git
-   ```
-2. Abra a pasta com os arquivos do repositório na IDE recomendada.
-3. Execute no Terminal da própria IDE.
+### 4. Execute o site
 
-<p align="right">(<a href="#readme-top">voltar ao início</a>)</p>
+```bash
+python -m Py.main
+```
 
-<h2 id="contributing"><p align="center">Contribuições</p></h2>
-<h3 id="how-do-it">Como Fazer</h3>
-Saiba como sugerir melhorias e correções:
+O site abre em `http://127.0.0.1:5000`.
 
-1. Faça um _fork_ do repositório.
-2. Crie sua _feature branch_: `git checkout -b my-new-feature`.
-3. Adicione os arquivos para mudança:  `git add .`.
-4. _Commit_ suas mudanças: `git commit -m "Add some feature"`.
-5. Envie para a _branch_: `git push origin my-new-feature`.
-6. Envie uma _pull request_.
+## Contas de demonstração
 
-- Adicione um título e/ou uma descrição para que fique clara qual sua sugestão para o software :).
+Use estes acessos para testar as telas:
 
-**Depois que seu _pull request_ estiver unido ao repositório, você pode apagar sua _branch_ com segurança.** 
+- Admin: `admin@fotecta.com` / `admin123`
+- Cliente: `cliente@fotecta.com` / `cliente123`
+- Fotógrafo: `fotografo@fotecta.com` / `foto123`
 
-<h2 id="license"><p align="center">Licença</p></h2>
+## Onde os dados ficam salvos
 
-Distribuído sob a [MIT License](https://www.github.com/gabrielasams/a-lista-de-compras/blob/main/LICENSE). Acesse para mais informação.
+O projeto grava os dados em um arquivo JSON temporário do sistema, gerado automaticamente em tempo de execução.
 
-Copyright © 2026 - Projeto Integrador em Computação I
+- Nome do arquivo: `fotecta_store.json`
+- Local: pasta temporária do sistema (`tempfile.gettempdir()`)
 
-<p align="right">(<a href="#readme-top">voltar ao início</a>)</p>
+Isso significa que:
+
+- os dados continuam enquanto o arquivo existir;
+- não é preciso configurar banco SQL;
+- se o arquivo temporário for apagado, o sistema recria os dados de demo.
+
+## Como resetar os dados
+
+Se quiser voltar ao estado inicial, use uma destas opções:
+
+1. Entre como admin e use a ação de restaurar usuários de teste.
+2. Apague o arquivo temporário `fotecta_store.json`.
+3. Reinicie a aplicação para recriar os dados básicos.
+
+## Estrutura principal
+
+- `Py/main.py`: inicializa o Flask e os dados de demo.
+- `Py/routes.py`: rotas da aplicação e APIs.
+- `Py/local_store.py`: armazenamento local em JSON.
+- `Py/static/`: arquivos CSS e JavaScript.
+- `Py/templates/`: páginas HTML.
+
+## Funcionalidades principais
+
+- Login com contas de demo
+- Busca de fotógrafos
+- Favoritar e desfavoritar profissionais
+- Painel do cliente
+- Painel do fotógrafo
+- Painel do admin
+- Recuperação de senha simulada
+
+## Problemas comuns
+
+Se o site não abrir, verifique estes pontos:
+
+- O ambiente virtual está ativado.
+- As dependências foram instaladas com `pip install -r requirements.txt`.
+- A porta `5000` não está ocupada por outro processo.
+
+Se quiser limpar tudo e começar de novo, apague o arquivo temporário do app e rode novamente.
+
+## Observação
+
+O projeto foi simplificado para uso local e didático. Ele não depende mais de MySQL nem de arquivo SQL exportado.

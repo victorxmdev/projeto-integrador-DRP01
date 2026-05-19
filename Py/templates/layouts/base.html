@@ -22,6 +22,13 @@
     </head>
 
     <body class="bg-light d-flex flex-column min-vh-100">
+        <!-- Mensagem para navegadores sem JavaScript (acessibilidade e debug) -->
+        <noscript>
+            <div class="alert alert-warning text-center mb-0">
+                Este site usa JavaScript para recursos interativos. Ative o JavaScript
+                no seu navegador para uma melhor experiência.
+            </div>
+        </noscript>
         <!-- Menu Global (Mantendo design e links da homepage, fixo no topo) -->
         <header class="topbar navbar navbar-expand-lg navbar-dark bg-dark sticky-top w-100 px-0">
             <div class="container-fluid px-4 py-2 py-lg-3">
@@ -30,8 +37,8 @@
                     <div class="dropdown nav-logged-in d-none">
                         <span class="avatar avatar-clickable" id="avatarDropdown" data-bs-toggle="dropdown" aria-expanded="false"></span>
                         <ul class="dropdown-menu shadow mt-2" aria-labelledby="avatarDropdown">
-                            <li><a class="dropdown-item nav-cliente d-none" href="{{ url_for('clientelogado') }}">Meu Perfil</a></li>
-                            <li><a class="dropdown-item nav-fotografo d-none" href="{{ url_for('fotografologado') }}">Painel do Fotógrafo</a></li>
+                            <li><a class="dropdown-item nav-cliente d-none" href="/clientelogado">Meu Perfil</a></li>
+                            <li><a class="dropdown-item nav-fotografo d-none" href="/fotografologado">Painel do Fotógrafo</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('editar_perfil') }}">Editar Dados</a></li>
                             <li><a class="dropdown-item text-danger" href="#" id="btnLogoutDropdown">Sair</a></li>
                         </ul>
@@ -54,8 +61,8 @@
                         <a id="navHomeLink" class="nav-link text-white" href="{{ url_for('index') }}">Home</a>
                         <a class="nav-link text-white nav-logged-out" href="{{ url_for('login') }}">Login</a>
                         <a class="nav-link text-white nav-logged-out" href="{{ url_for('cadastro') }}">Cadastre-se</a>
-                        <a class="nav-link text-white nav-cliente d-none" href="{{ url_for('clientelogado') }}">Área do Cliente</a>
-                        <a class="nav-link text-white nav-fotografo d-none" href="{{ url_for('fotografologado') }}">Painel do Fotógrafo</a>
+                        <a class="nav-link text-white nav-cliente d-none" href="/clientelogado">Área do Cliente</a>
+                        <a class="nav-link text-white nav-fotografo d-none" href="/fotografologado">Painel do Fotógrafo</a>
                         <a class="nav-link text-white nav-admin d-none" href="{{ url_for('admin') }}">Admin</a>
                         <a class="nav-link text-white" href="{{ url_for('sobrenos') }}">Sobre nós</a>
                         <span class="text-light fw-medium nav-logged-in d-none ms-lg-3" id="navUserName"></span>
@@ -93,6 +100,14 @@
         <!-- Seu JavaScript customizado -->
         <script type="text/javascript" src="{{ url_for('static', filename='js/auth.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/ui-helpers.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+
+        <script>
+            // Inicializa tooltips via helper conciso
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.UIHelpers && window.UIHelpers.initTooltips) window.UIHelpers.initTooltips({ touchMs: 1500 });
+            });
+        </script>
 
         <!-- Recupera e exibe a foto do usuário logado globalmente -->
         <script>
@@ -117,16 +132,17 @@
                 });
 
                 if (window.Auth) {
-                    const user = window.Auth.currentUser();
-                    
-                    // Seleciona os links pela classe para mostrá-los ou escondê-los
-                    const loggedOutLinks = document.querySelectorAll('.nav-logged-out');
-                    const loggedInLinks = document.querySelectorAll('.nav-logged-in');
-                    const clienteLinks = document.querySelectorAll('.nav-cliente');
-                    const fotografoLinks = document.querySelectorAll('.nav-fotografo');
-                    const adminLinks = document.querySelectorAll('.nav-admin');
+                    // Função para atualizar a UI da navbar com base no usuário (sincrona)
+                    const applyUserToNav = (user) => {
+                        // Seleciona os links pela classe para mostrá-los ou escondê-los
+                        const loggedOutLinks = document.querySelectorAll('.nav-logged-out');
+                        const loggedInLinks = document.querySelectorAll('.nav-logged-in');
+                        const clienteLinks = document.querySelectorAll('.nav-cliente');
+                        const fotografoLinks = document.querySelectorAll('.nav-fotografo');
+                        const adminLinks = document.querySelectorAll('.nav-admin');
 
-                    if (user) {
+                        if (!user) return;
+
                         // Esconde os links de Login e Cadastro se estiver logado
                         loggedOutLinks.forEach(el => el.classList.add('d-none'));
                         // Mostra o botão "Sair" universal
@@ -143,7 +159,6 @@
                         }
 
                         // Exibe dinamicamente somente as opções de navegação compatíveis com as permissões da conta.
-                        // Mostra o link específico dependendo do tipo da conta ("o if")
                         if (user.tipo === 'cliente') {
                             clienteLinks.forEach(el => el.classList.remove('d-none'));
                         } else if (user.tipo === 'fotografo') {
@@ -161,14 +176,24 @@
                                 el.style.backgroundPosition = 'center';
                             });
                         }
+                    };
+
+                    // Tenta obter o usuário do cache synchronously; se não houver, faz refresh assíncrono.
+                    const cached = window.Auth.currentUser();
+                    if (cached) {
+                        applyUserToNav(cached);
+                    } else if (window.Auth.refreshCurrentUser) {
+                        window.Auth.refreshCurrentUser().then((u) => {
+                            if (u) applyUserToNav(u);
+                        }).catch(() => {/* ignore */});
                     }
                     
                     // Lógica para os botões de Sair (Topo ou Dropdown)
                     const btnLogoutGlobal = document.getElementById('btnLogoutGlobal');
                     const btnLogoutDropdown = document.getElementById('btnLogoutDropdown');
-                    const handleLogout = (e) => {
+                    const handleLogout = async (e) => {
                         e.preventDefault();
-                        window.Auth.logout();
+                        try { await window.Auth.logout(); } catch(e) { /* ignore */ }
                         window.location.href = '/login';
                     };
                     if (btnLogoutGlobal) btnLogoutGlobal.addEventListener('click', handleLogout);

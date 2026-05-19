@@ -51,3 +51,34 @@
         isFixedUserId
     };
 })();
+
+// Tooltip + i18n helpers (concise, reusable)
+(function () {
+    function getI18n(locale) {
+        const dict = (window.FotectaI18N && window.FotectaI18N.pt) ? window.FotectaI18N.pt : { favorite: 'Favoritar', unfavorite: 'Remover dos favoritos', cannot_favorite_self: 'Você não pode favoritar seu próprio perfil' };
+        return dict;
+    }
+
+    function initTooltips(opts = {}) {
+        const selector = '[data-bs-toggle="tooltip"]';
+        const elements = Array.from(document.querySelectorAll(selector));
+        elements.forEach(el => {
+            // dispose existing
+            try { const existing = bootstrap.Tooltip.getInstance(el); if (existing) existing.dispose(); } catch (e) {}
+            const placement = (window.innerWidth <= 576) ? 'top' : (el.getAttribute('data-bs-placement') || opts.placement || 'left');
+            const tip = new bootstrap.Tooltip(el, { container: 'body', trigger: 'hover focus', placement });
+            // accessibility helper
+            const msg = el.getAttribute('title') || '';
+            const hid = 'tt-' + Math.random().toString(36).slice(2,8);
+            const span = document.createElement('span'); span.id = hid; span.className = 'visually-hidden'; span.textContent = msg;
+            if (el.parentNode) el.parentNode.insertBefore(span, el.nextSibling);
+            el.setAttribute('aria-describedby', hid);
+            // touch behavior
+            let tmo = null;
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); tip.show(); if (tmo) clearTimeout(tmo); tmo = setTimeout(()=>{ try{ tip.hide(); }catch{}; tmo=null; }, opts.touchMs || 1500); }, { passive: false });
+        });
+        window.addEventListener('resize', () => setTimeout(() => initTooltips(opts), 200));
+    }
+
+    window.UIHelpers = Object.assign(window.UIHelpers || {}, { getI18n, initTooltips });
+})();

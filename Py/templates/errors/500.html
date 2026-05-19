@@ -1,0 +1,19 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Erro Interno - FOTECTA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="p-4 bg-white border rounded shadow-sm">
+                <h1 class="h4 fw-bold">Algo deu errado</h1>
+                <p class="text-muted">O servidor encontrou um erro interno. Em ambientes de desenvolvimento
+                você pode ver mais detalhes habilitando o modo debug.</p>
+                <p class="small">Tente recarregar a página. Se o erro persistir, contate o administrador.</p>
+                <a class="btn btn-primary" href="/">Voltar à página inicial</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
