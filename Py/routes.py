@@ -1,6 +1,7 @@
 from flask import jsonify, render_template, request, session
+import os
 
-from Py.local_store import (
+from Py.sql_store import (
     add_reset_request,
     approve_reset_request,
     create_user,
@@ -13,6 +14,7 @@ from Py.local_store import (
     reject_reset_request,
     reset_seed,
     set_user_favorites,
+    increment_whatsapp_clicks,
     update_user,
     verify_user_password,
 )
@@ -20,10 +22,12 @@ from Py.main import app
 
 
 def render_page(template_name):
+    """Renderiza uma página HTML (pequeno wrapper para `render_template`)."""
     return render_template(template_name)
 
 
 def public_user(user):
+    """Retorna uma cópia do `user` sem campos sensíveis (ex.: `password_hash`)."""
     if not user:
         return None
     data = dict(user)
@@ -32,15 +36,31 @@ def public_user(user):
 
 
 def current_user():
+    """Retorna o usuário atualmente autenticado (ou `None`)."""
     user_id = session.get('user_id')
     return get_user_by_id(user_id) if user_id else None
 
 
 def require_current_user(user_id):
+    """Valida se o `user_id` corresponde ao usuário atual ou se é admin.
+
+    Retorna `(user, None)` em caso de sucesso ou `(None, (response, status))` em caso de erro.
+    """
     user = current_user()
     if not user:
         return None, (jsonify(ok=False, message='Não autenticado.'), 401)
     if str(user['id']) != str(user_id) and user.get('tipo') != 'admin':
+        return None, (jsonify(ok=False, message='Não autorizado.'), 403)
+    return user, None
+
+
+def require_admin():
+    """Verifica se o usuário atual é administrador.
+
+    Retorna `(user, None)` se for admin ou `(None, (response, status))` caso contrário.
+    """
+    user = current_user()
+    if not user or user.get('tipo') != 'admin':
         return None, (jsonify(ok=False, message='Não autorizado.'), 403)
     return user, None
 
@@ -115,13 +135,15 @@ def api_password_reset():
 
 @app.route('/api/users/<int:user_id>/favoritos', methods=['GET', 'POST'])
 def api_user_favoritos(user_id):
-    _, error = require_current_user(user_id)
+    user, error = require_current_user(user_id)
     if error:
         return error
 
     if request.method == 'GET':
-        user = get_user_by_id(user_id)
         return jsonify(ok=True, favoritos=(user or {}).get('favoritos', []))
+
+    if user.get('tipo') != 'cliente':
+        return jsonify(ok=False, message='Apenas clientes podem favoritar profissionais.'), 403
 
     data = request.get_json() or request.form
     favs = data.get('favoritos') or []
@@ -133,7 +155,15 @@ def api_user_favoritos(user_id):
 
 @app.route('/api/users', methods=['GET'])
 def api_users():
-    return jsonify(ok=True, users=[public_user(user) for user in list_users()])
+    tipo = request.args.get('tipo')
+    users = list_users()
+    if tipo:
+        users = [user for user in users if user.get('tipo') == tipo]
+        
+    # Ordena a lista usando a contagem de favoritos, do maior (top) para o menor
+    users = sorted(users, key=lambda u: u.get('favorited_by_count', 0), reverse=True)
+    
+    return jsonify(ok=True, users=[public_user(user) for user in users])
 
 
 @app.route('/api/users/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -165,17 +195,17 @@ def api_user_detail(user_id):
 
 @app.route('/api/reset-requests', methods=['GET'])
 def api_reset_requests():
-    user = current_user()
-    if not user or user.get('tipo') != 'admin':
-        return jsonify(ok=False, message='Não autorizado.'), 403
+    user, error = require_admin()
+    if error:
+        return error
     return jsonify(ok=True, requests=list_reset_requests())
 
 
 @app.route('/api/reset-requests/<path:email>/approve', methods=['POST'])
 def api_reset_request_approve(email):
-    user = current_user()
-    if not user or user.get('tipo') != 'admin':
-        return jsonify(ok=False, message='Não autorizado.'), 403
+    user, error = require_admin()
+    if error:
+        return error
     ok, message = approve_reset_request(email)
     if not ok:
         return jsonify(ok=False, message=message), 404
@@ -184,10 +214,18 @@ def api_reset_request_approve(email):
 
 @app.route('/api/reset-requests/<path:email>/reject', methods=['POST'])
 def api_reset_request_reject(email):
-    user = current_user()
-    if not user or user.get('tipo') != 'admin':
-        return jsonify(ok=False, message='Não autorizado.'), 403
+    user, error = require_admin()
+    if error:
+        return error
     ok, message = reject_reset_request(email)
+    if not ok:
+        return jsonify(ok=False, message=message), 404
+    return jsonify(ok=True, message=message)
+
+
+@app.route('/api/users/<int:user_id>/click-whatsapp', methods=['POST'])
+def api_click_whatsapp(user_id):
+    ok, message = increment_whatsapp_clicks(user_id)
     if not ok:
         return jsonify(ok=False, message=message), 404
     return jsonify(ok=True, message=message)
@@ -195,85 +233,85 @@ def api_reset_request_reject(email):
 
 @app.route('/api/admin/reset-seed', methods=['POST'])
 def api_admin_reset_seed():
-    user = current_user()
-    if not user or user.get('tipo') != 'admin':
-        return jsonify(ok=False, message='Não autorizado.'), 403
+    user, error = require_admin()
+    if error:
+        return error
     reset_seed()
     ensure_seed_data()
     return jsonify(ok=True)
 
 # Rotas públicas
 @app.route("/")
-def index():
+def index():  # pragma: no cover
     return render_page("pages/index.html")
 
 
 @app.route("/homepage")
-def homepage():
+def homepage():  # pragma: no cover
     return render_page("pages/index.html")
 
 
 @app.route("/login")
-def login():
+def login():  # pragma: no cover
     return render_page("pages/login.html")
 
 
 @app.route("/cadastro")
-def cadastro():
+def cadastro():  # pragma: no cover
     return render_page("pages/cadastro.html")
 
 
 @app.route("/signup-client")
-def signup_client():
+def signup_client():  # pragma: no cover
     return render_page("pages/signup_client.html")
 
 
 @app.route("/signup-fotografo")
-def signup_fotografo():
+def signup_fotografo():  # pragma: no cover
     return render_page("pages/signup_fotografo.html")
 
 
 @app.route("/sobrenos")
-def sobrenos():
+def sobrenos():  # pragma: no cover
     return render_page("pages/sobrenos.html")
 
 
 # Rotas de área logada / painel
 @app.route("/admin")
-def admin():
+def admin():  # pragma: no cover
     return render_page("pages/admin.html")
 
 
-@app.route("/clientelogado")
-def clientelogado():
+@app.route("/clientelogado")  
+def clientelogado():  # pragma: no cover
     return render_page("pages/clientelogado.html")
 
 
 @app.route("/fotografologado")
-def fotografologado():
+def fotografologado():  # pragma: no cover
     return render_page("pages/fotografologado.html")
 
 
 @app.route("/busca")
-def busca():
+def busca():  # pragma: no cover
     return render_page("pages/busca.html")
 
 
 @app.route("/perfil-publico")
-def perfil_publico():
+def perfil_publico():  # pragma: no cover
     return render_page("pages/perfil_publico.html")
 
 
 @app.route("/perfil-cliente")
-def perfil_cliente():
+def perfil_cliente():  # pragma: no cover
     return render_page("pages/perfil_cliente.html")
 
 
 @app.route("/perfil-prof")
-def perfil_prof():
+def perfil_prof():  # pragma: no cover
     return render_page("pages/perfil_prof.html")
 
 
 @app.route("/editar-perfil")
-def editar_perfil():
+def editar_perfil():  # pragma: no cover
     return render_page("pages/editar_perfil.html")

@@ -1,11 +1,22 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Página não encontrada - 404{% endblock %}
+{% block title %}Página Não Encontrada - FOTECTA{% endblock %}
+
+<!-- Remove a topbar desta página de erro -->
+{% block topbar %}{% endblock %}
+
+<!-- Remove o footer desta página de erro -->
+{% block footer %}{% endblock %}
 
 {% block content %}
 <div class="container py-5 text-center">
-    <h1 class="display-6">404 — Página não encontrada</h1>
-    <p class="lead">A rota que você tentou acessar não existe. Verifique o endereço ou volte para a página inicial.</p>
-    <a class="btn btn-primary" href="{{ url_for('index') }}">Voltar para Home</a>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <h1 class="display-1 fw-bold text-dark mb-3">404</h1>
+            <h2 class="h3 mb-4">Ops! Página não encontrada</h2>
+            <p class="text-muted mb-4">A página que você está procurando pode ter sido removida, mudou de nome ou está temporariamente indisponível.</p>
+            <a href="/" class="btn btn-dark px-4">Voltar ao Início</a>
+        </div>
+    </div>
 </div>
 {% endblock %}

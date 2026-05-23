@@ -15,6 +15,26 @@
 			<div class="col-md-4"><div class="box p-4"><div class="small text-muted">Fotógrafos</div><div id="metricFotografos" class="h4 mb-0">0</div></div></div>
 		</div>
 
+		<!-- Painel de Logs de Atualização de Perfil -->
+		<div class="box p-4 mt-4 mb-4 shadow-sm border-0 rounded">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h2 class="h5 fw-bold mb-0"><i class="fa-solid fa-list-check me-2"></i>Últimas 5 Atualizações de Perfil</h2>
+				<div>
+					<button id="btnAtualizarLogs" class="btn btn-sm btn-outline-dark"><i class="fa-solid fa-arrows-rotate me-1"></i>Atualizar Logs</button>
+					<button id="btnLimparLogs" class="btn btn-sm btn-outline-danger ms-1" title="Apagar Histórico"><i class="fa-solid fa-trash"></i></button>
+				</div>
+			</div>
+			<ul id="logList" class="list-group list-group-flush small">
+				<li class="list-group-item text-muted">Carregando logs...</li>
+			</ul>
+		</div>
+
+		<!-- Filtro Rápido em Tempo Real -->
+		<div class="box p-4 mt-4 mb-4 shadow-sm border-0 rounded">
+			<h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-magnifying-glass me-2"></i>Busca Rápida de Usuários</h2>
+			<input type="text" id="filtroRapidoAdmin" class="form-control" placeholder="Digite um nome ou e-mail para filtrar a tabela instantaneamente...">
+		</div>
+
 		<section class="box p-3 p-md-4 mb-4">
 			<h2 class="h5 mb-3">Cadastrar novo usuário</h2>
 			<form id="novoUsuarioForm" class="row g-2">
@@ -155,6 +175,61 @@
 
 		setFiltro('todos');
 		renderResets();
+
+		// Lógica do Painel de Logs
+		async function carregarLogs() {
+			const btn = document.getElementById('btnAtualizarLogs');
+			if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Atualizando...';
+			
+			try {
+				const res = await fetch('/api/admin/logs');
+				const data = await res.json();
+				const logList = document.getElementById('logList');
+				if (data.ok && data.logs.length > 0) {
+					logList.innerHTML = data.logs.map(log => `<li class="list-group-item font-monospace text-secondary">${log}</li>`).join('');
+				} else {
+					logList.innerHTML = '<li class="list-group-item text-muted">Nenhum registro recente encontrado.</li>';
+				}
+			} catch (error) {
+				console.error("Erro ao carregar logs", error);
+			} finally {
+				if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1"></i>Atualizar Logs';
+			}
+		}
+		carregarLogs();
+		document.getElementById('btnAtualizarLogs').addEventListener('click', carregarLogs);
+
+		document.getElementById('btnLimparLogs').addEventListener('click', async () => {
+			if (!confirm('Tem certeza que deseja apagar todo o histórico de logs? Essa ação não pode ser desfeita.')) return;
+			try {
+				const res = await fetch('/api/admin/logs', { method: 'DELETE' });
+				const data = await res.json();
+				if (data.ok) {
+					mostrarMensagem(data.message || 'Histórico apagado com sucesso.', false);
+					carregarLogs();
+				} else {
+					mostrarMensagem(data.message || 'Falha ao apagar o histórico.', true);
+				}
+			} catch (error) {
+				console.error("Erro ao limpar logs", error);
+			}
+		});
+
+		// Lógica do Filtro Rápido em Tempo Real (Front-end)
+		const filtroRapido = document.getElementById('filtroRapidoAdmin');
+		if (filtroRapido) {
+			filtroRapido.addEventListener('input', function(e) {
+				const termo = e.target.value.toLowerCase();
+				const usuariosBody = document.getElementById('usuariosBody');
+				if (usuariosBody) {
+					const linhas = usuariosBody.querySelectorAll('tr, .usuario-card, li');
+					linhas.forEach(linha => {
+						const conteudo = linha.textContent.toLowerCase();
+						linha.style.display = conteudo.includes(termo) ? '' : 'none';
+					});
+				}
+			});
+		}
 	}
 </script>
 {% endblock %}

@@ -1,6 +1,9 @@
+import os
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template
 
-from Py.local_store import ensure_seed_data
+from Py.sql_store import ensure_seed_data
 
 # App Flask principal.
 app = Flask(__name__)
@@ -11,12 +14,33 @@ app.config.from_object('Py.config.Config')
 import Py.routes  # noqa: F401
 
 
+# Configuração do sistema de logs em arquivo (salvo na pasta instance)
+if not os.path.exists('instance'):
+    os.makedirs('instance')
+file_handler = RotatingFileHandler('instance/alteracoes_perfil.log', maxBytes=102400, backupCount=10)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
+
 def ensure_demo_users():
     """Garante as contas fixas usadas nas telas de demonstração."""
     ensure_seed_data()
 
 
 ensure_demo_users()
+
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    """Renderiza uma página segura quando o usuário não estiver autenticado."""
+    return render_template('errors/401.html'), 401
+
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    """Renderiza uma página segura quando o acesso é negado (falta de permissão)."""
+    return render_template('errors/403.html'), 403
 
 
 @app.errorhandler(404)

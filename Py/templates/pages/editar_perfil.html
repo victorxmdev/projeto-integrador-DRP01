@@ -197,7 +197,7 @@
         });
 
         // Salva as alterações
-        formEditProfile.addEventListener('submit', (e) => {
+        formEditProfile.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const senhaAtualValue = senhaAtual.value.trim();
@@ -251,8 +251,8 @@
             }
 
             // Tenta atualizar e se falhar (ex: e-mail já existe) mostra erro
-            const result = window.Auth.updateUser(user.id, payload);
-            
+            const result = await window.Auth.updateUser(user.id, payload);
+
             if (!result.ok) {
                 showToast(result.message, 'danger');
                 return;

@@ -15,6 +15,7 @@
                 <div class="box p-4 text-center h-100">
                     <div id="perfilFoto" class="shadow-sm mx-auto mb-3 perfil-foto"></div>
                     <h1 id="perfilNome" class="h4 fw-bold mb-1"></h1>
+                    <div id="perfilBadges" class="mb-2"></div>
                     <div id="perfilEstrelas" class="mb-2"></div>
                     <p id="perfilLocal" class="text-muted small mb-3"><i class="fa-solid fa-location-dot me-1"></i>Localização não informada</p>
                     
@@ -82,6 +83,16 @@
         document.getElementById('perfilContainer').classList.remove('d-none');
         document.getElementById('perfilNome').textContent = f.nome;
         
+        // Badges (Muito Requisitado / Especialidades)
+        let badgesHtml = '';
+        if ((f.favorited_by_count || 0) > 3) {
+            badgesHtml += '<span class="badge bg-danger me-1"><i class="fa-solid fa-fire me-1"></i>Muito Requisitado</span>';
+        }
+        if (f.especialidades && f.especialidades.length > 0) {
+            badgesHtml += `<span class="badge bg-dark me-1"><i class="fa-solid fa-camera me-1"></i>${f.especialidades.length} Especialidade(s)</span>`;
+        }
+        document.getElementById('perfilBadges').innerHTML = badgesHtml;
+
         // Estrelas de avaliação e média
         const avaliacoes = f.avaliacoes || [];
         if (avaliacoes.length > 0) {
@@ -113,6 +124,11 @@
         const linkAtual = encodeURIComponent(window.location.href);
         const mensagemZap = encodeURIComponent(`Confira o perfil de ${f.nome} na FOTECTA! 📸\n\n`);
         document.getElementById('btnWhatsapp').href = `https://api.whatsapp.com/send?text=${mensagemZap}${linkAtual}`;
+
+        // Registra o clique no banco de dados invisivelmente no fundo
+        document.getElementById('btnWhatsapp').addEventListener('click', () => {
+            fetch(`/api/users/${f.id}/click-whatsapp`, { method: 'POST' }).catch(() => {});
+        });
 
         // Especialidades
         const esp = f.especialidades || [];

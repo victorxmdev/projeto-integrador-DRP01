@@ -13,6 +13,21 @@
 				<a class="btn btn-dark" href="{{ url_for('busca') }}">Ver meu perfil na busca</a>
 				<button id="logoutFotografo" class="btn btn-outline-dark" type="button">Sair</button>
 			</div>
+
+			<div class="row g-3 mt-3">
+				<div class="col-md-5 col-lg-4">
+					<div class="p-3 border rounded bg-light d-flex align-items-center justify-content-between">
+						<div class="small fw-semibold text-muted mb-0">Cliques no WhatsApp</div>
+						<div class="fs-4 fw-bold text-success"><i class="fa-brands fa-whatsapp me-2"></i><span id="metricWhatsapp">0</span></div>
+					</div>
+				</div>
+				<div class="col-md-5 col-lg-4">
+					<div class="p-3 border rounded bg-light d-flex align-items-center justify-content-between">
+						<div class="small fw-semibold text-muted mb-0">Vezes favoritado</div>
+						<div class="fs-4 fw-bold text-danger"><i class="fa-solid fa-heart me-2"></i><span id="metricFavoritos">0</span></div>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<!-- Seção de Portfólio -->
@@ -83,4 +98,21 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/fotografologado.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const updateMetrics = () => {
+            const user = window.Auth ? window.Auth.currentUser() : null;
+            const metricWhatsappEl = document.getElementById('metricWhatsapp');
+            const metricFavoritosEl = document.getElementById('metricFavoritos');
+            if (user) {
+                if (metricWhatsappEl) metricWhatsappEl.textContent = user.whatsapp_clicks || 0;
+                if (metricFavoritosEl) metricFavoritosEl.textContent = user.favorited_by_count || 0;
+            }
+        };
+        
+        // Preenche o valor na primeira carga e sempre que o usuário for atualizado
+        updateMetrics();
+        window.addEventListener('fotecta:user-updated', updateMetrics);
+    });
+</script>
 {% endblock %}

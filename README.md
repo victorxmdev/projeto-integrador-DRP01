@@ -16,7 +16,7 @@ O FOTECTA é um site em Flask para conectar clientes e fotógrafos. O fluxo prin
 - Flask
 - Bootstrap
 - JavaScript puro
-- Armazenamento local em arquivo JSON temporário
+- Banco SQL local em SQLite
 
 ## Pré-requisitos
 
@@ -24,7 +24,7 @@ O FOTECTA é um site em Flask para conectar clientes e fotógrafos. O fluxo prin
 - `pip`
 - VS Code ou outro editor de sua preferência
 
-Não é preciso instalar MySQL, banco SQL ou servidor externo. Os dados ficam em um arquivo local temporário.
+Não é preciso instalar MySQL nem outro servidor externo. Os dados ficam em um banco SQLite local gerado automaticamente.
 
 ## Como rodar
 
@@ -74,16 +74,16 @@ Use estes acessos para testar as telas:
 
 ## Onde os dados ficam salvos
 
-O projeto grava os dados em um arquivo JSON temporário do sistema, gerado automaticamente em tempo de execução.
+O projeto grava os dados em um banco SQLite local, gerado automaticamente em tempo de execução.
 
-- Nome do arquivo: `fotecta_store.json`
-- Local: pasta temporária do sistema (`tempfile.gettempdir()`)
+- Nome do arquivo: `instance/fotecta.sqlite3`
+- Schema SQL: `Banco de Dados/fotecta_schema.sql`
 
 Isso significa que:
 
-- os dados continuam enquanto o arquivo existir;
-- não é preciso configurar banco SQL;
-- se o arquivo temporário for apagado, o sistema recria os dados de demo.
+- os dados continuam enquanto o banco existir;
+- não é preciso configurar MySQL ou outro servidor;
+- se o arquivo SQLite for apagado, o sistema recria os dados de demo.
 
 ## Como resetar os dados
 
@@ -97,7 +97,7 @@ Se quiser voltar ao estado inicial, use uma destas opções:
 
 - `Py/main.py`: inicializa o Flask e os dados de demo.
 - `Py/routes.py`: rotas da aplicação e APIs.
-- `Py/local_store.py`: armazenamento local em JSON.
+- `Py/sql_store.py`: armazenamento SQL local em SQLite.
 - `Py/static/`: arquivos CSS e JavaScript.
 - `Py/templates/`: páginas HTML.
 

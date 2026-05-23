@@ -77,6 +77,8 @@
 #  - Nunca cole tokens no chat ou no código versionado.
 #  - Use o gh auth login para autenticação interativa.
 #
+pytest==8.0.0
+pytest-cov==4.1.0
 blinker==1.9.0
 Bootstrap-Flask==2.5.0
 click==8.3.3
